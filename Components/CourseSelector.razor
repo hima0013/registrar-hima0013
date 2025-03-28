@@ -1,0 +1,27 @@
+@using registrar_hima0013.Models
+@namespace registrar_hima0013.Components
+
+<div>
+    @if (Courses != null && Selections != null)
+    {
+        foreach (var course in Courses)
+        {
+            <div class="form-check">
+                <input type="checkbox"
+                       class="form-check-input"
+                       @bind="Selections[course.Code]" />
+                <label class="form-check-label">
+                    @course.Code @course.Title - @course.WeeklyHours hour@(course.WeeklyHours == 1 ? "" : "s") per week
+                </label>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<Course>? Courses { get; set; }
+
+    [Parameter]
+    public Dictionary<string, bool>? Selections { get; set; }
+}

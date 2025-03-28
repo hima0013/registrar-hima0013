@@ -1,4 +1,4 @@
-﻿namespace Registrar;
+﻿namespace registrar_hima0013.Models;
 
 public class Course
 {
