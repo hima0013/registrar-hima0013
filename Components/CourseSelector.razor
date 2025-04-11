@@ -11,7 +11,7 @@
                        class="form-check-input"
                        @bind="Selections[course.Code]" />
                 <label class="form-check-label">
-                    @course.Code @course.Title - @course.WeeklyHours hour@(course.WeeklyHours == 1 ? "" : "s") per week
+                    @course.Code @course.Name - @course.WeeklyHours hour@(course.WeeklyHours == 1 ? "" : "s") per week
                 </label>
             </div>
         }

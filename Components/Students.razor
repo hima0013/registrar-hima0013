@@ -1,24 +1,35 @@
+@page "/"
 @page "/students"
+@using Microsoft.EntityFrameworkCore
 @using registrar_hima0013.Models
 @using registrar_hima0013.Data
+@inject RegistrarContext dbContext
+@inject NavigationManager navManager
 
-<h3>Students</h3>
+<h3 class="mb-4">Students</h3>
 
-<a class="btn btn-primary mb-3" href="/new-student">Add New Student</a>
+<button class="btn btn-success mb-3" @onclick="@(() => navManager.NavigateTo("/newstudent"))">
+    ➕ Add New Student
+</button>
 
-@if (students == null || students.Count == 0)
+@if (students == null)
 {
-    <p>No students found.</p>
+    <p><em>Loading students...</em></p>
+}
+else if (students.Count == 0)
+{
+    <div class="alert alert-info">No students found. Click "Add New Student" to create one.</div>
 }
 else
 {
-    <table class="table table-striped">
-        <thead>
+    <table class="table table-striped table-bordered align-middle">
+        <thead class="table-light">
             <tr>
-                <th>Student ID</th>
-                <th>Full Name</th>
+                <th>ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
                 <th>Type</th>
-                <th>Courses Enrolled</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -26,9 +37,15 @@ else
             {
                 <tr>
                     <td>@student.Id</td>
-                    <td>@student.FirstName @student.LastName</td>
+                    <td>@student.FirstName</td>
+                    <td>@student.LastName</td>
                     <td>@student.Type</td>
-                    <td>@student.Courses?.Count ?? 0</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary"
+                                @onclick="@(() => navManager.NavigateTo($"/register/{student.Id}"))">
+                            Register
+                        </button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -36,10 +53,10 @@ else
 }
 
 @code {
-    private List<Student> students;
+    private List<Student>? students;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        students = Helper.GetStudents();
+        students = await dbContext.Students.ToListAsync();
     }
 }

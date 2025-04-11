@@ -1,60 +1,115 @@
-@page "/register/{id:int}"
+@page "/register/{studentId:int}"
 @using registrar_hima0013.Models
 @using registrar_hima0013.Data
-@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
+@inject RegistrarContext dbContext
+@inject NavigationManager navManager
+@inject IJSRuntime JS
 
-<h3>Register Student</h3>
+<h3>Course Registration</h3>
 
-@if (student == null)
+@if (student == null || courses == null)
 {
-    <p>Invalid student. Redirecting...</p>
+    <p><em>Loading...</em></p>
 }
 else
 {
-    <div>
-        <strong>@student.FirstName @student.LastName - @student.Id</strong>
-    </div>
+    <EditForm Model="@this" OnValidSubmit="SaveRegistration">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
 
-    <p class="mt-3">The following courses are currently available for registration:</p>
+        <p><strong>Student:</strong> @student.FirstName @student.LastName (@student.Type)</p>
 
-    <div>
-        @foreach (var course in availableCourses)
+        @foreach (var course in courses)
         {
-            <div class="form-check">
-                <input type="checkbox" class="form-check-input"
-                       checked="@student.Courses.Any(c => c.Code == course.Code)" disabled />
-                <label class="form-check-label">
-                    @($"{course.Code} {course.Title} - {course.WeeklyHours} hour{(course.WeeklyHours == 1 ? "" : "s")} per week")
-                </label>
+            <div>
+                <input type="checkbox" @bind="course.IsSelected" />
+                <label>@course.Name (@course.WeeklyHours hrs)</label>
             </div>
         }
-    </div>
 
-    <div class="mt-3">
-        <a class="btn btn-primary" href="/students">Back to Students</a>
-    </div>
+        <button type="submit" class="btn btn-primary">Register Courses</button>
+        <button class="btn btn-secondary" @onclick="@(() => navManager.NavigateTo("/students"))">Cancel</button>
+    </EditForm>
 }
 
 @code {
-    [Parameter]
-    public int id { get; set; }
+    [Parameter] public int studentId { get; set; }
+    private Student? student;
+    private List<CheckboxCourse> courses = new();
 
-    private Student student;
-    private List<Course> availableCourses = new();
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        student = Helper.GetStudents().FirstOrDefault(s => s.Id == id);
-        availableCourses = Helper.GetCourses();
+        student = await dbContext.Students.FindAsync(studentId);
 
         if (student == null)
         {
-            // Delay briefly then redirect
-            Task.Run(async () =>
+            navManager.NavigateTo("/students");
+            return;
+        }
+
+        var allCourses = await dbContext.Courses.ToListAsync();
+        var studentCourses = await dbContext.Registrations
+            .Where(r => r.StudentId == studentId)
+            .Select(r => r.CourseId)
+            .ToListAsync();
+
+        courses = allCourses.Select(c => new CheckboxCourse
+        {
+            Id = c.Id,
+            Name = c.Name,
+            WeeklyHours = c.WeeklyHours,
+            IsSelected = studentCourses.Contains(c.Id)
+        }).ToList();
+    }
+
+    private async Task SaveRegistration()
+    {
+        int totalHours = courses.Where(c => c.IsSelected).Sum(c => c.WeeklyHours);
+        int totalCourses = courses.Count(c => c.IsSelected);
+
+        string validationMessage = student?.Type switch
+        {
+            "Full-time" when totalHours > 16
+                => "Full-time students cannot exceed 16 weekly hours.",
+            "Part-time" when totalCourses > 3
+                => "Part-time students cannot register for more than 3 courses.",
+            "Coop" when totalHours > 4 || totalCourses > 2
+                => "Coop students cannot exceed 4 weekly hours and 2 courses.",
+            _ => ""
+        };
+
+        if (!string.IsNullOrEmpty(validationMessage))
+        {
+            await JS.InvokeVoidAsync("alert", validationMessage);
+            return;
+        }
+
+        var oldRegistrations = dbContext.Registrations.Where(r => r.StudentId == studentId);
+        dbContext.Registrations.RemoveRange(oldRegistrations);
+
+        foreach (var course in courses.Where(c => c.IsSelected))
+        {
+            dbContext.Registrations.Add(new Registration
             {
-                await Task.Delay(2000);
-                NavigationManager.NavigateTo("/students");
+                StudentId = studentId,
+                CourseId = course.Id
             });
         }
+
+        await dbContext.SaveChangesAsync();
+
+        await JS.InvokeVoidAsync("alert", $"Successfully registered for {totalCourses} courses ({totalHours} weekly hours).");
+
+        navManager.NavigateTo("/students");
+    }
+
+    class CheckboxCourse
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public int WeeklyHours { get; set; }
+        public bool IsSelected { get; set; }
     }
 }

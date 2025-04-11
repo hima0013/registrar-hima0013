@@ -1,0 +1,28 @@
+@inherits LayoutComponentBase
+@namespace registrar_hima0013.Components.Shared
+
+<HeadContent>
+    <!-- ✅ CDN Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="app.css" rel="stylesheet" />
+</HeadContent>
+
+<div class="container mt-4">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light rounded shadow-sm mb-4">
+        <a class="navbar-brand fw-bold" href="/">Registrar</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/students">Students</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/newstudent">New Student</NavLink>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="content">
+        @Body
+    </div>
+</div>
