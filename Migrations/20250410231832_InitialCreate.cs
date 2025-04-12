@@ -4,10 +4,10 @@
 
 namespace Registrar.Migrations
 {
-    /// <inheritdoc />
+ 
     public partial class InitialCreate : Migration
     {
-        /// <inheritdoc />
+       
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
@@ -81,7 +81,7 @@ namespace Registrar.Migrations
                 column: "CourseId");
         }
 
-        /// <inheritdoc />
+      
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
